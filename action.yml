@@ -6,27 +6,53 @@ branding:
   icon: package
 inputs:
   pkgname:
-    description: 'AUR package name'
-    required: true
-  pkgbuild:
-    description: 'Path to PKGBUILD file'
-    required: true
-  assets:
-    description: 'Newline-separated glob patterns for additional files to be added to the AUR repository'
+    description: 'AUR package name (optional; auto-detected from PKGBUILD if omitted)'
     required: false
     default: ''
+  pkgbuild:
+    description: 'Path to PKGBUILD file'
+    required: false
+    default: './PKGBUILD'
+  assets:
+    description: 'Newline-separated glob patterns for extra files to add (conflicts with asset_dir)'
+    required: false
+    default: ''
+  asset_dir:
+    description: 'Mirror this directory into the AUR repo (respects .gitignore; conflicts with assets)'
+    required: false
+    default: ''
+  use_source_files:
+    description: 'Copy local files referenced in PKGBUILD source=() (non-URLs)'
+    required: false
+    default: 'false'
   updpkgsums:
     description: 'Update checksums using `updpkgsums`'
     required: false
     default: 'false'
+  auto_pkgver:
+    description: 'Run pkgver() and bump pkgver in PKGBUILD'
+    required: false
+    default: 'false'
+  reset_pkgrel_on_autopkgver:
+    description: 'When auto_pkgver=true, reset pkgrel=1'
+    required: false
+    default: 'true'
   test:
     description: 'Check that PKGBUILD could be built'
     required: false
     default: 'false'
-  test_flags:
-    description: 'Command line flags for makepkg to build the package (if `test` is enabled)'
+  auto_install_deps:
+    description: 'When test=true, attempt to install repo deps and build missing AUR deps'
     required: false
-    default: '--clean --cleanbuild --nodeps'
+    default: 'true'
+  test_flags:
+    description: 'Flags to pass to makepkg during test'
+    required: false
+    default: ''  # explicit would be better?
+  pre_script:
+    description: 'Path to a shell script to run before processing (e.g., custom prep/deps)'
+    required: false
+    default: ''
   post_process:
     description: 'A line of commands to execute after processing the package'
     required: false
