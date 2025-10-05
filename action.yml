@@ -1,6 +1,6 @@
-name: 'Publish AUR package'
+name: 'AUR package publisher'
 description: 'Publish an AUR package'
-author: KSXGitHub
+author: mlm-games
 branding:
   color: blue
   icon: package
