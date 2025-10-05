@@ -1,4 +1,4 @@
-name: 'AUR package publisher'
+name: 'AUR package deploy'
 description: 'Publish an AUR package'
 author: mlm-games
 branding:
