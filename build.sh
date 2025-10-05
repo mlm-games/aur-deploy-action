@@ -11,7 +11,7 @@ asset_dir=$INPUT_ASSET_DIR
 use_source_files=$INPUT_USE_SOURCE_FILES
 updpkgsums=$INPUT_UPDPKGSUMS
 auto_pkgver=$INPUT_AUTO_PKGVER
-reset_pkgrel_on_autopkgver=$INPUT_RESET_PKGREL_ON_AUTOPKGV
+reset_pkgrel_on_autopkgver=${INPUT_RESET_PKGREL_ON_AUTOPKGVER:-true}
 test=$INPUT_TEST
 auto_install_deps=$INPUT_AUTO_INSTALL_DEPS
 read -r -a test_flags <<< "${INPUT_TEST_FLAGS:-}"
