@@ -61,7 +61,8 @@ Glob patterns will be expanded by bash when copying the files to the repository.
 
 **Optional** Comma-separated list of types to use when adding aur.archlinux.org to known hosts.
 
-Few others have been added in updates, view [actions.yml](actions.yml) for the complete list
+
+Few others have been added in updates, view [actions.yml](actions.yml) for the complete list.
 
 ## Example usage
 
