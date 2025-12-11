@@ -24,6 +24,7 @@ commit_message=$INPUT_COMMIT_MESSAGE
 allow_empty_commits=$INPUT_ALLOW_EMPTY_COMMITS
 force_push=$INPUT_FORCE_PUSH
 ssh_keyscan_types=$INPUT_SSH_KEYSCAN_TYPES
+auto_pkgrel=${INPUT_AUTO_PKGREL:-false}
 
 export HOME=/home/builder
 GLOBIGNORE=".:.."
@@ -124,6 +125,41 @@ copy_pkgbuilder_files() {
     # shellcheck disable=SC2086
     cp -rvt /tmp/local-repo/ $assets
   fi
+}
+
+maybe_auto_pkgrel() {
+  [[ "$auto_pkgrel" == "true" ]] || return 0
+  echo '::group::Auto-determining pkgrel'
+  
+  cd /tmp/local-repo
+  
+  new_ver=$(bash -lc 'source PKGBUILD; printf "%s" "$pkgver"')
+  
+  aur_pkgbuild=$(curl -sf "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=${pkgname}" 2>/dev/null || true)
+  
+  if [[ -n "$aur_pkgbuild" ]]; then
+    current_ver=$(echo "$aur_pkgbuild" | grep "^pkgver=" | head -1 | cut -d= -f2 | tr -d "' \"" || true)
+    current_pkgrel=$(echo "$aur_pkgbuild" | grep "^pkgrel=" | head -1 | cut -d= -f2 | tr -d "' \"" || true)
+    echo "Current AUR: pkgver=$current_ver, pkgrel=$current_pkgrel"
+  else
+    current_ver=""
+    current_pkgrel="0"
+    echo "No existing AUR package found"
+  fi
+  
+  [[ "$current_pkgrel" =~ ^[0-9]+$ ]] || current_pkgrel=0
+  
+  if [[ "$new_ver" == "$current_ver" ]]; then
+    new_pkgrel=$((current_pkgrel + 1))
+    echo "Same version, incrementing pkgrel: $current_pkgrel -> $new_pkgrel"
+  else
+    new_pkgrel=1
+    echo "New version ($current_ver -> $new_ver), resetting pkgrel to 1"
+  fi
+  
+  sed -i -E "s/^pkgrel=.*/pkgrel=$new_pkgrel/" PKGBUILD
+  
+  echo '::endgroup::'
 }
 
 mirror_asset_dir() {
