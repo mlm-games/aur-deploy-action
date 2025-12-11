@@ -82,6 +82,10 @@ inputs:
     description: 'Comma-separated list of types to use when adding aur.archlinux.org to known hosts'
     required: false
     default: 'rsa,ecdsa,ed25519'
+  auto_pkgrel:
+    description: 'Auto-increment pkgrel if pushing same version, reset to 1 for new versions'
+    required: false
+    default: 'false'
 runs:
   using: 'docker'
   image: 'Dockerfile'
