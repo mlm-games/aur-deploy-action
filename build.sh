@@ -134,31 +134,48 @@ maybe_auto_pkgrel() {
   cd /tmp/local-repo
   
   new_ver=$(bash -lc 'source PKGBUILD; printf "%s" "$pkgver"')
+  echo "Local PKGBUILD version: $new_ver"
+  echo "Package name: $pkgname"
   
-  aur_pkgbuild=$(curl -sf "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=${pkgname}" 2>/dev/null || true)
+  aur_url="https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=${pkgname}"
+  echo "Fetching: $aur_url"
   
-  if [[ -n "$aur_pkgbuild" ]]; then
-    current_ver=$(echo "$aur_pkgbuild" | grep "^pkgver=" | head -1 | cut -d= -f2 | tr -d "' \"" || true)
-    current_pkgrel=$(echo "$aur_pkgbuild" | grep "^pkgrel=" | head -1 | cut -d= -f2 | tr -d "' \"" || true)
-    echo "Current AUR: pkgver=$current_ver, pkgrel=$current_pkgrel"
+  http_code=$(curl -s -o /tmp/aur_pkgbuild.txt -w "%{http_code}" "$aur_url" 2>/dev/null) || http_code="000"
+  echo "HTTP status: $http_code"
+  
+  current_ver=""
+  current_pkgrel="0"
+  
+  if [[ "$http_code" == "200" ]] && [[ -s /tmp/aur_pkgbuild.txt ]]; then
+    echo "--- First 5 lines of fetched PKGBUILD ---"
+    head -5 /tmp/aur_pkgbuild.txt
+    echo "---"
+    
+    current_ver=$(sed -n 's/^pkgver=//p' /tmp/aur_pkgbuild.txt | head -1 | tr -d "'\"")
+    current_pkgrel=$(sed -n 's/^pkgrel=//p' /tmp/aur_pkgbuild.txt | head -1 | tr -d "'\"")
+    
+    echo "Extracted pkgver: '$current_ver'"
+    echo "Extracted pkgrel: '$current_pkgrel'"
   else
-    current_ver=""
-    current_pkgrel="0"
-    echo "No existing AUR package found"
+    echo "Could not fetch AUR PKGBUILD (HTTP $http_code)"
+    [[ -f /tmp/aur_pkgbuild.txt ]] && echo "Response: $(head -3 /tmp/aur_pkgbuild.txt)"
   fi
   
-  [[ "$current_pkgrel" =~ ^[0-9]+$ ]] || current_pkgrel=0
+  if ! [[ "$current_pkgrel" =~ ^[0-9]+$ ]]; then
+    current_pkgrel=0
+  fi
   
-  if [[ "$new_ver" == "$current_ver" ]]; then
+  if [[ -n "$current_ver" && "$new_ver" == "$current_ver" ]]; then
     new_pkgrel=$((current_pkgrel + 1))
-    echo "Same version, incrementing pkgrel: $current_pkgrel -> $new_pkgrel"
+    echo "Same version, incrementing: $current_pkgrel -> $new_pkgrel"
   else
     new_pkgrel=1
-    echo "New version ($current_ver -> $new_ver), resetting pkgrel to 1"
+    echo "New/different version, setting pkgrel=1"
   fi
   
-  sed -i -E "s/^pkgrel=.*/pkgrel=$new_pkgrel/" PKGBUILD
+  sed -i "s/^pkgrel=.*/pkgrel=$new_pkgrel/" PKGBUILD
   
+  rm -f /tmp/aur_pkgbuild.txt
   echo '::endgroup::'
 }
 
