@@ -249,6 +249,7 @@ else
 fi
 echo '::endgroup::'
 
+maybe_auto_pkgrel
 maybe_update_pkgver
 maybe_updpkgsums
 
